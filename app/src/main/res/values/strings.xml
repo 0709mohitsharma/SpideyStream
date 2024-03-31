@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Spidey Stream</string>
+    <string name="url_hint">Paste IMDB or TMDB url...</string>
+    <string name="author_git">github.com/Mohit-Sharmaji</string>
 </resources>
