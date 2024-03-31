@@ -15,9 +15,13 @@ SpideyStream is dedicated to providing users with an exciting streaming experien
 
 ## How to Use
 
-1. Open the SpideyStream application.
-2. Share or paste the URL of the movie or TV series you want to watch.
-3. Get ready to swing into action and enjoy your SpideyStream experience!
+1. Install & Open the SpideyStream application.
+2. Share or paste the URL of the movie or TV series you want to watch from IMDB or TMDB.
+3. Choose the content type Movie or Series.
+4. Click Go.
+5. Additionally set as default app for IMDB & TMDB links:
+    1. Goto settings > Set as default > Supported web addresses
+    2. Turn on all the links shown & Enjoy :) 
 
 ## Contribution
 
