@@ -44,11 +44,13 @@ public class UrlTester {
                     return;
                 }
             } catch (Exception e) {
+                // Handle exception gracefully
                 e.printStackTrace();
             }
         }
 
-        notifyListener(null); // No URL was accessible
+        // Notify listener that no URL was accessible
+        notifyListener(null);
     }
 
     private Callable<String> createUrlTestTask(String url) {
@@ -57,21 +59,26 @@ public class UrlTester {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
                 connection.setRequestMethod("HEAD");
+                connection.setConnectTimeout(5000); // Set connection timeout to 5 seconds
+                connection.setReadTimeout(5000); // Set read timeout to 5 seconds
                 int responseCode = connection.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // Close the connection after use
+                    connection.disconnect();
                     long endTime = System.currentTimeMillis();
                     long timeTaken = endTime - startTime;
                     return url;
                 }
             } catch (IOException e) {
                 // URL is not accessible
-                e.printStackTrace();
+                // Handle exception gracefully
+                // e.printStackTrace();
             }
             return null;
         };
     }
 
     private void notifyListener(final String bestUrl) {
-        handler.post(() -> listener.onUrlTestComplete(bestUrl));
+        handler.post(() -> listener.onUrlTestComplete(bestUrl != null ? bestUrl : ""));
     }
 }
