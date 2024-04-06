@@ -1,4 +1,4 @@
-package com.sharmaji.spideystream;
+package com.sharmaji.spideystream.parsers;
 
 import android.util.Log;
 import org.jsoup.Jsoup;

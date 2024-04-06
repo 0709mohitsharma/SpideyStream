@@ -14,11 +14,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SpideyStream">
         <activity
-            android:name=".StreamActivity"
+            android:name=".activities.StreamActivity"
             android:exported="false"
             android:screenOrientation="landscape"/>
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

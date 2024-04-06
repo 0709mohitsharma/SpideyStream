@@ -1,4 +1,4 @@
-package com.sharmaji.spideystream;
+package com.sharmaji.spideystream.activities;
 
 import android.app.ActionBar;
 import android.content.pm.ActivityInfo;
@@ -19,6 +19,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+
+import com.sharmaji.spideystream.R;
 
 import org.adblockplus.libadblockplus.android.webview.AdblockWebView;
 

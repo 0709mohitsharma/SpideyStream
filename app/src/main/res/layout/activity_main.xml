@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    tools:context=".MainActivity">
+    tools:context=".activities.MainActivity">
 
     <ImageView
         android:layout_width="140dp"
@@ -23,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:layout_gravity="center"
+        android:layout_marginHorizontal="7dp"
         android:background="#FFFFFF"
         android:elevation="25dp"
         android:foregroundGravity="center"
@@ -34,12 +35,12 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/url_edit"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:hint="@string/url_hint"
             app:boxStrokeColor="@color/black"
             app:hintTextColor="@color/black"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_paste"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -48,21 +49,37 @@
                 android:id="@+id/textInputEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:drawableEnd="@drawable/ic_paste"
                 android:drawableTint="#F42C30"
                 android:inputType="textUri"
                 android:textColor="@color/black" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <ImageView
+            android:id="@+id/btn_paste"
+            android:layout_width="40dp"
+            android:layout_height="0dp"
+            android:elevation="50dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="5dp"
+            android:paddingTop="5dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:src="@drawable/ic_paste"
+            app:layout_constraintBottom_toBottomOf="@+id/url_edit"
+            app:layout_constraintEnd_toEndOf="@+id/submitBtn"
+            app:layout_constraintHorizontal_bias="1.0"
+            app:layout_constraintStart_toStartOf="@+id/submitBtn"
+            app:layout_constraintTop_toTopOf="@+id/url_edit" />
+
         <RadioGroup
             android:id="@+id/typeGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@+id/url_edit"
-            app:layout_constraintTop_toBottomOf="@+id/url_edit">
+            app:layout_constraintTop_toTopOf="@+id/submitBtn">
 
             <RadioButton
                 android:id="@+id/movieRadio"
@@ -89,12 +106,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="10dp"
+            android:layout_marginTop="5dp"
             android:backgroundTint="#F42C30"
             android:text="Go"
             android:textColor="@color/white"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/url_edit"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/url_edit" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

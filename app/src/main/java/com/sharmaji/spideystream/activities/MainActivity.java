@@ -1,4 +1,4 @@
-package com.sharmaji.spideystream;
+package com.sharmaji.spideystream.activities;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.Toast;
@@ -19,13 +18,19 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
-
-import org.adblockplus.libadblockplus.android.AdblockEngine;
-import org.adblockplus.libadblockplus.android.webview.AdblockWebView;
+import com.sharmaji.spideystream.R;
+import com.sharmaji.spideystream.utils.UrlUtils;
+import com.sharmaji.spideystream.utils.Utils;
 
 public class MainActivity extends AppCompatActivity {
     //Todo: Add support for newly added movies and series
     //Todo: Add episodes support
+    //Todo: Add Watch history
+    //Todo: Retry method & pick the best server
+    //Todo: Cache the domains
+    //Todo: Stream with the best domain
+    // Currently used url & choose url feature via all stream urls
+
     private boolean isMovie = true;
     private boolean unchecked = true;
     private LinearLayout progressLayout;
@@ -81,7 +86,16 @@ public class MainActivity extends AppCompatActivity {
                 urlEdit.setText(uri.toString());
             }
         }
-
+        findViewById(R.id.btn_paste).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String url = Utils.getClipboardText(MainActivity.this);
+                if (!url.isEmpty())
+                    urlEdit.setText(url);
+                else
+                    Toast.makeText(MainActivity.this, "Empty Clipboard", Toast.LENGTH_SHORT).show();
+            }
+        });
         goBtn.setOnClickListener(v -> {
             if (!unchecked) {
                 String url = urlEdit.getText().toString();
