@@ -1,5 +1,6 @@
 package com.sharmaji.spideystream.parsers;
 
+import android.os.AsyncTask;
 import android.util.Log;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -11,9 +12,19 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import android.util.Log;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.*;
+
 public class DomainParser {
 
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final OnParseFinishListener listener;
 
     // Interface for the finish listener
@@ -26,11 +37,21 @@ public class DomainParser {
         this.listener = listener;
     }
 
-    public void executeParsing(String url) {
-        executor.execute(() -> {
-            List<String> domainList = doInBackground(url);
+    public void executeParsing(String url, boolean addTimeout) {
+        Future<List<String>> future = executor.submit(() -> doInBackground(url));
+        try {
+            List<String> domainList;
+            if (addTimeout) {
+                domainList = future.get(5, TimeUnit.SECONDS); // Timeout set to 5 seconds
+            } else {
+                domainList = future.get();
+            }
             onPostExecute(domainList);
-        });
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            future.cancel(true); // Cancel the task if it exceeds the timeout
+            Log.e("DomainParser", "Error parsing domain: " + e.getMessage());
+            onPostExecute(null); // Notify listener with null list
+        }
     }
 
     protected List<String> doInBackground(String url) {

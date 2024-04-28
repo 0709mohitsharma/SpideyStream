@@ -2,12 +2,16 @@ package com.sharmaji.spideystream.utils;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
+
 import com.sharmaji.spideystream.parsers.DomainParser;
 import com.sharmaji.spideystream.parsers.IdParser;
 
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class UrlUtils {
     private final String url;
@@ -33,10 +37,7 @@ public class UrlUtils {
 
 //  Getting url type to generate API url
     private void getDbHostType() {
-        // If working hosts are empty then set the cached hosts.
-        if (!workingHosts.isEmpty()) PrefsHandler.setHosts(context, workingHosts);
-        else workingHosts = PrefsHandler.getHosts(context);
-
+        Log.d("UrlUtils", "getDbHostType: executed!");
         if(url.contains("imdb.com")){
             generateStreamUrl(true);
         } else if (url.contains("themoviedb.org")) {
@@ -47,6 +48,38 @@ public class UrlUtils {
     }
 
     private void generateStreamUrl(boolean isImdb) {
+        Log.d("UrlUtils", "generateStreamUrl: executed!");
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            String host = PrefsHandler.getLastBestHost(context);
+            String urlPrefix = genUrlPrefix(isImdb);
+
+            if (!workingHosts.isEmpty()) {
+                for (String h : workingHosts) {
+                    streamUrls.add(h + urlPrefix);
+                }
+                // Generate all URLs and then return the best one
+                new UrlTester(bestUrl -> {
+                    // Work with the best URL
+                    PrefsHandler.setLastBestHosts(context, bestUrl);
+                    if (bestUrl == null || bestUrl.isEmpty()) {
+                        listener.onUrlGenerated(host + urlPrefix);
+                        Log.e("UriUtils", "The Default Url is: " + bestUrl);
+                    } else {
+                        listener.onUrlGenerated(bestUrl);
+                        Log.d("UriUtils", "The Best Url is: " + bestUrl);
+                    }
+                }).testUrls(streamUrls.toArray(new String[0]));
+            } else {
+                streamUrls = PrefsHandler.getHosts(context);
+            }
+
+            // Clean up executor
+            executor.shutdown();
+        });
+    }
+
+    /*private void generateStreamUrl(boolean isImdb) {
         String host = PrefsHandler.getLastBestHost(context);
         String urlPrefix = genUrlPrefix(isImdb);
 
@@ -57,6 +90,7 @@ public class UrlUtils {
             // Generate all urls and then returns the best one
             new UrlTester(bestUrl -> {
                 //Work with the best URL
+                PrefsHandler.setLastBestHosts(context, bestUrl);
                 if (bestUrl == null || bestUrl.isEmpty()){
                     listener.onUrlGenerated(host+urlPrefix);
                     Log.e("UriUtils","The Default Url is: "+bestUrl);
@@ -69,7 +103,7 @@ public class UrlUtils {
             streamUrls = PrefsHandler.getHosts(context);
         }
 
-    }
+    }*/
 
     private String genUrlPrefix(boolean isImdb) {
         String id = getContentId(isImdb);
@@ -100,10 +134,27 @@ public class UrlUtils {
         Log.d("LogSerial", "getWorkingHost: initiated!");
         DomainParser parser = new DomainParser(domainList -> {
             workingHosts = domainList;
+
+            if(workingHosts == null || !workingHosts.isEmpty()) PrefsHandler.setHosts(context,workingHosts);
+            else workingHosts = PrefsHandler.getHosts(context);
+
+            // If working hosts are empty then set the cached hosts.
+            if (workingHosts == null && PrefsHandler.getHosts(context) == null) {
+                workingHosts = new ArrayList<>();
+                workingHosts.add("https://vidsrc.me");
+                workingHosts.add("https://vidsrc.in");
+                workingHosts.add("https://vidsrc.pm");
+                workingHosts.add("https://vidsrc.net");
+                workingHosts.add("https://vidsrc.xyz");
+                PrefsHandler.setHosts(context, workingHosts);
+            }
+
             Log.d("LogSerial", "getWorkingHost: Completed!");
             getDbHostType();
         });
-        parser.executeParsing("https://vidsrc.domains/");
+        List<String> list = PrefsHandler.getHosts(context);
+        boolean addTimeout = list != null && !list.isEmpty();
+        parser.executeParsing("https://vidsrc.domains/", addTimeout);
     }
 
 }
