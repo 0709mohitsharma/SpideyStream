@@ -2,6 +2,8 @@
 
 SpideyStream is a captivating platform that allows users to stream movies and TV series with a touch of Spidey's flair. Share or paste the URL of your favorite movie or series into the application, and start enjoying the action-packed entertainment.
 
+**NOTE:** This app isn't optimized since I'm short on time for this side project, but it works well! Your understanding is appreciated or u can always fork this project and optimize. **;)**
+
 ## Features
 
 - Stream movies and TV series with Spidey's charm.
