@@ -29,13 +29,13 @@ public class HistoryAdapter extends ListAdapter<HistoryModel,HistoryAdapter.Hist
     private static final DiffUtil.ItemCallback<HistoryModel> DIFF_CALLBACK = new DiffUtil.ItemCallback<HistoryModel>() {
         @Override
         public boolean areItemsTheSame(HistoryModel oldItem, HistoryModel newItem) {
-            return oldItem.getId() == newItem.getId();
+            return oldItem.getSource_url_id().equals(newItem.getSource_url_id());
         }
 
         @Override
         public boolean areContentsTheSame(HistoryModel oldItem, HistoryModel newItem) {
             // below line is to check the course name, description and course duration. 
-            return oldItem.getId() == newItem.getId();
+            return oldItem.getSource_url_id().equals(newItem.getSource_url_id());
         }
     };
 

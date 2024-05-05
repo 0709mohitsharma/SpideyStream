@@ -25,6 +25,7 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.sharmaji.spideystream.R;
+import com.sharmaji.spideystream.room.Repository;
 import com.sharmaji.spideystream.utils.PrefsHandler;
 import com.sharmaji.spideystream.utils.Utils;
 
@@ -39,9 +40,12 @@ import timber.log.Timber;
 public class StreamActivity extends AppCompatActivity {
     AdblockWebView webView;
     private String streamingUrl;
+    private String sourceUrl;
+
     private List<String> hosts;
     private boolean hasLoaded = false;
     private boolean hasSwitched = false;
+    private Repository repository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,7 @@ public class StreamActivity extends AppCompatActivity {
         setFullScreen();
         hideSystemUI();
         hosts = PrefsHandler.getHosts(StreamActivity.this);
+        repository = new Repository(getApplication());
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_stream);
@@ -60,13 +65,14 @@ public class StreamActivity extends AppCompatActivity {
         });
         // Getting Stream url
         streamingUrl = getIntent().getStringExtra("URL");
+        sourceUrl = getIntent().getStringExtra("SourceUrl");
         Timber.tag("Streaming Url").d(streamingUrl);
+        Timber.tag("Source Url").d(sourceUrl);
 
         // Initializing webView
         webView = findViewById(R.id.web_view);
         ProgressBar progressBar = findViewById(R.id.video_load_progress);
         webView.getSettings().setSafeBrowsingEnabled(true);
-        webView.getSettings().setUserAgentString(Utils.userAgent);
         webView.loadUrl(streamingUrl);
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -80,6 +86,23 @@ public class StreamActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 runOnUiThread(() -> progressBar.setVisibility(View.GONE));
                 hasLoaded = true;
+                // JavaScript code to check if the HTML contains the specific message
+                String checkScript = "javascript:document.querySelector('h4').innerText;";
+
+                // Evaluate JavaScript code
+                view.evaluateJavascript(checkScript, message -> {
+                    if (message != null && message.contains("This media is unavailable at the moment.")) {
+                        // Media is unavailable, show an error message or take appropriate action
+                        repository.updateAvailability(sourceUrl,false);
+                        runOnUiThread(() -> {
+                            Toast.makeText(StreamActivity.this, "Try Later! This media is not available!", Toast.LENGTH_SHORT).show();
+                        });
+
+                    } else {
+                        repository.updateAvailability(sourceUrl,true);
+                        // Media is available, continue with normal operations
+                    }
+                });
             }
 
             @Override
@@ -101,18 +124,8 @@ public class StreamActivity extends AppCompatActivity {
                         Toast.makeText(StreamActivity.this, "404 Error: File not found", Toast.LENGTH_SHORT).show();
                     }
                 }
-//                else if (errorCode == WebViewClient.ERROR_CONNECT) {
-//                    if (hosts.isEmpty()) {
-//                        Toast.makeText(StreamActivity.this, "No suitable streaming host found!", Toast.LENGTH_SHORT).show();
-//                        finish();
-//                    } else {
-//                        replaceHost(streamingUrl);
-//                        webView.loadUrl(streamingUrl);
-//                    }
-//                }
                 else {
                     Log.e("URL ERROR", "onReceivedError: " + errorCode);
-//                    Toast.makeText(StreamActivity.this, "Error: " + errorCode, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -170,7 +183,6 @@ public class StreamActivity extends AppCompatActivity {
         decorView.setSystemUiVisibility(uiOptions);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-
     }
 
     private void hideSystemUI() {

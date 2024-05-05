@@ -3,44 +3,34 @@ package com.sharmaji.spideystream.activities;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.OnBackPressedDispatcher;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.material.textfield.TextInputEditText;
 import com.sharmaji.spideystream.R;
 import com.sharmaji.spideystream.adapters.HistoryAdapter;
+import com.sharmaji.spideystream.databinding.ActivityMainBinding;
 import com.sharmaji.spideystream.models.HistoryModel;
 import com.sharmaji.spideystream.room.Repository;
 import com.sharmaji.spideystream.utils.UrlUtils;
 import com.sharmaji.spideystream.utils.Utils;
-
-import org.adblockplus.libadblockplus.android.webview.AdblockWebView;
 
 import java.util.List;
 
@@ -55,36 +45,37 @@ public class MainActivity extends AppCompatActivity {
     private final OnBackPressedDispatcher dispatcher = getOnBackPressedDispatcher();
 
     private boolean isMovie = true;
-    private TextInputEditText urlEdit;
-    private AdblockWebView imdbWebView;
+    private String title="";
+    private String thumb_url ="";
+    private String source_url="";
+
     private Repository repository;
     private boolean unchecked = true;
-    private RecyclerView recyclerView;
-    private CardView play;
     private String streamUrl;
-
-    private LinearLayout progressLayout;
+    private ActivityMainBinding binding;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+        
+        // Initializing View Binding
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main, (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
+        // Initializing repo
         repository = new Repository(getApplication());
-        play = findViewById(R.id.playContent);
-        play.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (streamUrl!=null) {
-                    handleURL(streamUrl, isMovie);
-                }
+
+        binding.playContent.setOnClickListener(v -> {
+            if (streamUrl!=null) {
+                handleURL(streamUrl, isMovie);
             }
         });
-        findViewById(R.id.git_img).setOnClickListener(v -> {
+
+        binding.gitImg.setOnClickListener(v -> {
             // Create an Intent with ACTION_VIEW and the URI of the link
             String githubUrl = "https://github.com/Mohit-Sharmaji";
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(githubUrl));
@@ -100,12 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
         setupRecyclerView();
 
-        urlEdit = findViewById(R.id.textInputEditText);
-        Button goBtn = findViewById(R.id.submitBtn);
-        progressLayout = findViewById(R.id.progressLayout);
-
-        RadioGroup radioGroup = findViewById(R.id.typeGroup);
-        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+        binding.typeGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.movieRadio) {
                 // Movie radio button is selected
                 isMovie = true;
@@ -126,36 +112,36 @@ public class MainActivity extends AppCompatActivity {
 
             // Check if URI is not null and if it belongs to themoviedb.org or imdb.com
             if (uri != null) {
-                urlEdit.setText(uri.toString());
+                binding.textInputEditText.setText(uri.toString());
             }
         }
-        findViewById(R.id.textInputEditText).setOnClickListener(new View.OnClickListener() {
+        binding.textInputEditText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String url = Utils.getClipboardText(MainActivity.this);
                 if (!url.isEmpty())
-                    urlEdit.setText(url);
+                    binding.textInputEditText.setText(url);
                 else
                     Toast.makeText(MainActivity.this, "Empty Clipboard", Toast.LENGTH_SHORT).show();
             }
         });
-        urlEdit.setInputType(InputType.TYPE_NULL);
+        binding.textInputEditText.setInputType(InputType.TYPE_NULL);
 
-        findViewById(R.id.btn_paste).setOnClickListener(new View.OnClickListener() {
+        binding.btnPaste.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String url = Utils.getClipboardText(MainActivity.this);
                 if (!url.isEmpty())
-                    urlEdit.setText(url);
+                    binding.textInputEditText.setText(url);
                 else {
                     Toast.makeText(MainActivity.this, "Empty Clipboard", Toast.LENGTH_SHORT).show();
-                    urlEdit.setText("");
+                    binding.textInputEditText.setText("");
                 }
             }
         });
-        goBtn.setOnClickListener(v -> {
+        binding.submitBtn.setOnClickListener(v -> {
             if (!unchecked) {
-                String url = urlEdit.getText().toString();
+                String url = binding.textInputEditText.getText().toString();
                 if (url.isEmpty()) {
                     Toast.makeText(MainActivity.this, "Please enter a valid url!", Toast.LENGTH_SHORT).show();
                 } else {
@@ -167,18 +153,20 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        imdbWebView = findViewById(R.id.imdbWebView);
-        imdbWebView.getSettings().setSafeBrowsingEnabled(true);
-        imdbWebView.getSettings().setUserAgentString(Utils.userAgent);
+        WebSettings webSettings = binding.imdbWebView.getSettings();
+        webSettings.setSafeBrowsingEnabled(true);
+        binding.imdbWebView.getSettings().setUserAgentString(Utils.userAgent);
+        binding.imdbWebView.loadUrl("https://www.imdb.com");
+//        binding.imdbWebView.loadUrl("https://www.themoviedb.org/");
 
-        imdbWebView.loadUrl("https://www.imdb.com");
-        imdbWebView.setWebViewClient(new WebViewClient(){
+        binding.imdbWebView.setWebViewClient(new WebViewClient(){
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
                 setProgress(true);
+                source_url = url;
                 if(Utils.isValidUrl(url)){
-                    urlEdit.setText(url);
+                    binding.textInputEditText.setText(url);
                 }
             }
 
@@ -189,61 +177,82 @@ public class MainActivity extends AppCompatActivity {
                 // JavaScript code to extract the content attribute of the meta tag with property="og:type"
                 String javascript = "javascript:document.querySelector(\"meta[property='og:type']\").getAttribute(\"content\");";
 
+                // JavaScript code to extract the title of the page
+                String titleScript = "javascript:document.title;";
+
+                // JavaScript code to extract the content attribute of the meta tag with property="twitter:image"
+                String imageScript = "javascript:document.querySelector(\"meta[property='twitter:image']\").getAttribute(\"content\");";
+
+                // Evaluate JavaScript code to extract title
+                view.evaluateJavascript(titleScript, titleValue -> {
+                    if (titleValue != null) {
+                        title = titleValue.replaceAll("\"", "")
+                                .replace("- IMDb","")
+                                .replace("— The Movie Database (TMDB)","")
+                                .replace("-",""); // Remove quotes
+                    }
+                });
+
+                // Evaluate JavaScript code to extract image URL
+                view.evaluateJavascript(imageScript, imageValue -> {
+                    if (imageValue != null) {
+                        thumb_url = imageValue.replaceAll("\"", ""); // Remove quotes
+                    }
+                });
+
                 // Evaluate JavaScript code
                 view.evaluateJavascript(javascript, value -> {
                     if (value != null) {
                         // Check if the value contains "video.movie" or "video.tv_show"
                         if (value.contains("video.movie")) {
                             streamUrl=url;
-                            urlEdit.setText(url);
-                            radioGroup.check(R.id.movieRadio);
+                            binding.textInputEditText.setText(url);
+                            binding.typeGroup.check(R.id.movieRadio);
                             isMovie = true;
-                            play.setVisibility(View.VISIBLE);
+                            binding.playContent.setVisibility(View.VISIBLE);
                         } else if (value.contains("video.tv_show")) {
                             streamUrl=url;
-                            urlEdit.setText(url);
-                            radioGroup.check(R.id.seriesRadio);
+                            binding.textInputEditText.setText(url);
+                            binding.typeGroup.check(R.id.seriesRadio);
                             isMovie = false;
-                            play.setVisibility(View.VISIBLE);
+                            binding.playContent.setVisibility(View.VISIBLE);
                         } else {
-                            play.setVisibility(View.GONE);
+                            binding.playContent.setVisibility(View.GONE);
                         }
                     }
                 });
             }
         });
-        findViewById(R.id.switch_img).setOnClickListener(new View.OnClickListener() {
+        binding.switchImg.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (recyclerView.getVisibility()==View.GONE){
-                    imdbWebView.setVisibility(View.GONE);
-                    recyclerView.setVisibility(View.VISIBLE);
-                    findViewById(R.id.git_img).setVisibility(View.VISIBLE);
-                    findViewById(R.id.btn_clear_history).setVisibility(View.VISIBLE);
+                if (binding.rvHistory.getVisibility()==View.GONE){
+                    binding.imdbWebView.setVisibility(View.GONE);
+                    binding.rvHistory.setVisibility(View.VISIBLE);
+                    binding.gitImg.setVisibility(View.VISIBLE);
+                    binding.btnClearHistory.setVisibility(View.VISIBLE);
                 }else{
-                    imdbWebView.setVisibility(View.VISIBLE);
-                    recyclerView.setVisibility(View.GONE);
-                    findViewById(R.id.git_img).setVisibility(View.GONE);
-                    findViewById(R.id.btn_clear_history).setVisibility(View.GONE);
+                    binding.imdbWebView.setVisibility(View.VISIBLE);
+                    binding.rvHistory.setVisibility(View.GONE);
+                    binding.gitImg.setVisibility(View.GONE);
+                    binding.btnClearHistory.setVisibility(View.GONE);
                 }
             }
         });
         dispatcher.addCallback(new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                imdbWebView.goBack();
+                binding.imdbWebView.goBack();
             }
         });
-
-        LinearLayout searchLayout = findViewById(R.id.searchLayout);
-        ImageView searchToggle = findViewById(R.id.search_toggle);
-        searchToggle.setOnClickListener(v -> {
-            if(searchLayout.getVisibility()==View.GONE){
-                searchLayout.setVisibility(View.VISIBLE);
-                searchToggle.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_up));
+        
+        binding.searchToggle.setOnClickListener(v -> {
+            if(binding.searchLayout.getVisibility()==View.GONE){
+                binding.searchLayout.setVisibility(View.VISIBLE);
+                binding.searchToggle.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_up));
             }else{
-                searchToggle.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_down));
-                searchLayout.setVisibility(View.GONE);
+                binding.searchToggle.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_down));
+                binding.searchLayout.setVisibility(View.GONE);
             }
         });
     }
@@ -251,17 +260,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupRecyclerView() {
         LiveData<List<HistoryModel>> historyList = repository.getHistoryList();
-        recyclerView = findViewById(R.id.rvHistory);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
+        binding.rvHistory.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
         HistoryAdapter adapter = new HistoryAdapter(this, model -> {
             Intent intent = new Intent(MainActivity.this, StreamActivity.class);
-            intent.putExtra("URL", model.getUrl());
+            intent.putExtra("URL", model.getStream_url());
+            intent.putExtra("SourceUrl",model.getSource_url_id());
             startActivity(intent);
         });
         historyList.observe(this, adapter::submitList);
-        recyclerView.setAdapter(adapter);
+        binding.rvHistory.setAdapter(adapter);
 
-        findViewById(R.id.btn_clear_history).setOnClickListener(new View.OnClickListener() {
+        binding.btnClearHistory.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 repository.deleteAll();
@@ -270,11 +279,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setProgress(boolean isVisible){
+        title="";
+        thumb_url="";
         Log.d("MainActivity", "setProgress: "+isVisible);
         if (isVisible)
-            progressLayout.setVisibility(View.VISIBLE);
+            binding.progressLayout.setVisibility(View.VISIBLE);
         else
-            progressLayout.setVisibility(View.GONE);
+            binding.progressLayout.setVisibility(View.GONE);
     }
 
     private void handleURL(String url, boolean isMovie) {
@@ -286,8 +297,9 @@ public class MainActivity extends AppCompatActivity {
 
                 // Adding to watch history
                 // Inserting a new history item
-                String title = isMovie ? "Movie" : "Series";
-                HistoryModel historyItem = new HistoryModel(title, Utils.getCurrentTimeAndDate(MainActivity.this), streamUrl);
+                if (title.isEmpty())
+                    title = isMovie ? "Movie" : "Series";
+                HistoryModel historyItem = new HistoryModel(source_url,title, Utils.getCurrentTimeAndDate(MainActivity.this), streamUrl, thumb_url);
                 repository.insert(historyItem);
 
                 Intent intent = new Intent(MainActivity.this, StreamActivity.class);
@@ -295,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 runOnUiThread(()->{
                     setProgress(false);
-                    urlEdit.setText("");
+                    binding.textInputEditText.setText("");
                 });
             }
 
@@ -304,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(()->{
                     setProgress(false);
                     Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-                    urlEdit.setText("");
+                    binding.textInputEditText.setText("");
                 });
             }
         });
